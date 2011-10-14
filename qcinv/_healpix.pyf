@@ -1,0 +1,32 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module _healpix ! in 
+    interface  ! in :_healpix
+        threadsafe subroutine map2vlm(lmax,vmap,spin,vlm,npix) ! in :_healpix:_healpix.f90
+	    use pix_tools
+            use alm_tools
+            use healpix_types
+            integer intent(in) :: lmax
+            double complex dimension(npix),intent(in) :: vmap
+            integer intent(in) :: spin
+            double complex dimension((lmax+1)*(lmax+1)),intent(out) :: vlm
+            integer optional,intent(hide),check(len(vmap)>=npix),depend(vmap) :: npix=len(vmap)
+        end subroutine map2vlm
+
+        threadsafe subroutine vlm2map(nside,vlm,spin,vmap,nvlm,lmax) ! in :_healpix:_healpix.f90
+            use pix_tools
+            use alm_tools
+            use healpix_types
+            integer intent(in) :: nside
+            double complex dimension(12*nside*nside),intent(out),depend(nside) :: vmap
+            integer intent(in) :: spin
+            double complex dimension(nvlm),intent(in) :: vlm
+            integer optional,intent(hide),check(len(vlm)>=nvlm),depend(vlm) :: nvlm=len(vlm)
+            integer optional,intent(hide),depend(nvlm) :: lmax=(sqrt(nvlm)-1)
+        end subroutine vlm2map
+    end interface 
+end python module _healpix
+
+! This file was auto-generated with f2py (version:1).
+! See http://cens.ioc.ee/projects/f2py2e/
