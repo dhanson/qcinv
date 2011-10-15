@@ -72,6 +72,6 @@ def alm_copy(alm, lmax=None):
     else:
         ret = np.zeros(lmax2nlm(lmax), dtype=np.complex)
         for m in xrange(0, lmax+1):
-            ret[(m*(2*lmax+1-m)/2):(m*(2*lmax+1-m)/2 + m + 1)] = alm[(m*(2*alm_lmax+1-m)/2):(m*(2*alm_lmax+1-m)/2 + m+1)]
+            ret[((m*(2*lmax+1-m)/2) + m):(m*(2*lmax+1-m)/2 + lmax + 1)] = alm[(m*(2*alm_lmax+1-m)/2 + m):(m*(2*alm_lmax+1-m)/2 +lmax+1)]
 
     return ret

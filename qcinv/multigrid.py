@@ -21,8 +21,8 @@ class pre_op_split():
     def calc(self, talm):
         self.iter += 1
 
-        talm_low = self.pre_op_low(talm)
-        talm_hgh = self.pre_op_hgh(talm)
+        talm_low = self.pre_op_low(util.alm_copy(talm, lmax=self.lsplit))
+        talm_hgh = self.pre_op_hgh(util.alm_copy(talm, lmax=self.lmax))
 
         return util.alm_splice(talm_low, talm_hgh, self.lsplit)
 
@@ -53,7 +53,7 @@ class pre_op_multigrid():
     def calc(self, talm):
         monitor = cd_monitors.monitor_basic(self.opfilt.dot_op, iter_max=self.iter_max, eps_min=self.eps_min, logger=self.logger)
 
-        soltn = np.zeros(util.lmax2nlm(self.lmax))
+        soltn = np.zeros(util.lmax2nlm(self.lmax), dtype=np.complex)
         
         cd_solve.cd_solve( soltn, util.alm_copy(talm, lmax=self.lmax),
                            self.fwd_op, self.pre_ops, self.opfilt.dot_op,
