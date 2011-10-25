@@ -59,8 +59,8 @@ def alm_splice(alm_lo, alm_hi, lsplit):
     assert( alm_hi_lmax >= lsplit )
 
     ret = np.copy(alm_hi)
-    for m in xrange(0, lsplit):
-        ret[(m*(2*alm_hi_lmax+1-m)/2 + m):(m*(2*alm_hi_lmax+1-m)/2+lsplit)] = alm_lo[(m*(2*alm_lo_lmax+1-m)/2 + m):(m*(2*alm_lo_lmax+1-m)/2+lsplit)]
+    for m in xrange(0, lsplit+1):
+        ret[(m*(2*alm_hi_lmax+1-m)/2 + m):(m*(2*alm_hi_lmax+1-m)/2+lsplit+1)] = alm_lo[(m*(2*alm_lo_lmax+1-m)/2 + m):(m*(2*alm_lo_lmax+1-m)/2+lsplit+1)]
     return ret
 
 def alm_copy(alm, lmax=None):
