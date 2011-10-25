@@ -75,3 +75,32 @@ def alm_copy(alm, lmax=None):
             ret[((m*(2*lmax+1-m)/2) + m):(m*(2*lmax+1-m)/2 + lmax + 1)] = alm[(m*(2*alm_lmax+1-m)/2 + m):(m*(2*alm_lmax+1-m)/2 +lmax+1)]
 
     return ret
+
+def alm2rlm(alm):
+    lmax = nlm2lmax( len(alm) )
+    rlm  = np.zeros( (lmax+1)**2 )
+
+    ls  = np.arange(0, lmax+1)
+    l2s = ls**2
+    rt2 = np.sqrt(2.)
+
+    rlm[l2s] = alm[ls].real
+    for m in xrange(1, lmax+1):
+        rlm[l2s[m:] + 2*m - 1] = alm[m*(2*lmax+1-m)/2 + ls[m:]].real * rt2
+        rlm[l2s[m:] + 2*m + 0] = alm[m*(2*lmax+1-m)/2 + ls[m:]].imag * rt2
+    return rlm
+
+def rlm2alm(rlm):
+    lmax = int( np.sqrt(len(rlm))-1 )
+    assert( (lmax+1)**2 == len(rlm) )
+
+    alm = np.zeros( lmax2nlm(lmax), dtype=np.complex )
+
+    ls  = np.arange(0, lmax+1, dtype=np.int64)
+    l2s = ls**2
+    ir2 = 1.0 / np.sqrt(2.)
+
+    alm[ls] = rlm[l2s]
+    for m in xrange(1, lmax+1):
+        alm[m*(2*lmax+1-m)/2 + ls[m:]] = (rlm[l2s[m:] + 2*m - 1] + 1.j * rlm[l2s[m:] + 2*m + 0]) * ir2
+    return alm

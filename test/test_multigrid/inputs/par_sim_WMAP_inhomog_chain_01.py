@@ -1,5 +1,3 @@
-# qsub -l nodes=1:ppn=8,walltime=24:00:00 -q batch -v "ARGS=inputs/par_sim_WMAP_inhomog_chain_01.py" scripts/run_chain.py
-
 import imp
 import numpy as np
 

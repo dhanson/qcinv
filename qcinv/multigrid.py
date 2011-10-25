@@ -73,6 +73,13 @@ def parse_pre_op_descr(pre_op_descr, **kwargs):
         return pre_op_split( int(lsplit), kwargs['lmax'], pre_op_low, pre_op_hgh )
     elif re.match("diag_cl\Z", pre_op_descr):
         return kwargs['opfilt'].pre_op_diag( kwargs['s_cls'], kwargs['n_inv_filt'] )
+    elif re.match("dense\((.*),\s*(.*)\)\Z", pre_op_descr):
+        (nside, lmax) = re.match("dense\((.*),\s*(.*)\)\Z", pre_op_descr).groups()
+        print 'creating dense preconditioner. nside = ', nside, ' lmax = ', lmax
+
+        fwd_op =  kwargs['opfilt'].fwd_op( kwargs['s_cls'], kwargs['n_inv_filt'].degrade(int(nside)))
+
+        return  kwargs['opfilt'].pre_op_dense( int(lmax), fwd_op )
     elif re.match("stage\(.*\)\Z", pre_op_descr):
         (stage_id,) = re.match("stage\((.*)\)\Z", pre_op_descr).groups()
         print 'creating multigrid preconditioner: stage_id = ', stage_id

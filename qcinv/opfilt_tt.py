@@ -88,6 +88,53 @@ class pre_op_diag():
     def calc(self, talm):
         return hp.almxfl(talm, self.filt)
 
+class pre_op_dense():
+    def __init__(self, lmax, fwd_op):
+        # construct a low-l, low-nside dense preconditioner by brute force.
+        # order of operations is O(nside**2 lmax**3) ~ O(lmax**5), so doing
+        # by brute force is still comparable to matrix inversion, with
+        # benefit of being very simple to implement.
+
+        nrlm = (lmax+1)**2
+        tmat = np.zeros( ( nrlm, nrlm ) )
+        trlm = np.zeros( nrlm )
+
+        fwd_op.n_inv_filt.load_mem()
+        ntmpl = 0
+        for t in fwd_op.n_inv_filt.templates:
+            ntmpl += t.nmodes
+
+        print "initializing dense preconditioner:"
+        print "     lmax  =", lmax
+        print "     ntmpl =", ntmpl
+
+        for i in np.arange(0, nrlm):
+            if np.mod(i, int( 0.1 * nrlm) ) == 0: print ("   filling M: %4.1f" % (100. * i / nrlm)), "%"
+            trlm[i]   = 1.0
+            tmat[:,i] = util.alm2rlm( fwd_op( util.rlm2alm(trlm) ) )
+            trlm[i]   = 0.0
+
+        print "   inverting M..."
+        eigv, eigw = np.linalg.eigh( tmat )
+
+        eigv_inv = 1.0 / eigv
+
+        if ntmpl > 0:
+            # do nothing to the ntmpl eigenmodes
+            # with the lowest eigenvalues.
+            print "     eigv[ntmpl-1] = ", eigv[ntmpl-1]
+            print "     eigv[ntmpl]   = ", eigv[ntmpl]
+            eigv_inv[0:ntmpl] = 1.0
+
+        self.minv = np.dot( np.dot( eigw, np.diag(eigv_inv)), np.transpose(eigw) )
+
+    def __call__(self, talm):
+        return self.calc(talm)
+
+    def calc(self, talm):
+        return util.rlm2alm( np.dot( self.minv, util.alm2rlm(talm) ) )
+
+
 class alm_filter_ninv():
     def __init__(self, n_inv, b_transf, marge_monopole=False, marge_dipole=False, marge_maps=[]):
         self.par_n_inv      = n_inv
