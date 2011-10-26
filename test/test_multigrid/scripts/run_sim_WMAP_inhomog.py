@@ -28,7 +28,7 @@ if (__name__ == "__main__"):
     
     # noise level
     # http://lambda.gsfc.nasa.gov/product/map/dr4/skymap_info.cfm
-    ninv = hp.read_map("inputs/wmap/wmap_da_forered_iqumap_r9_7yr_V1_v4.fits", field=3) / (3.319*1.0e3)**2
+    ninv = hp.read_map("inputs/wmap/wmap_band_forered_iqumap_r9_7yr_V_v4.fits", field=3) / (3.137*1.0e3)**2
     assert( len(ninv) == npix )
 
     ncov  = np.zeros(npix)
@@ -36,7 +36,7 @@ if (__name__ == "__main__"):
 
     assert( npix == len(ninv) )
 
-    beam  = np.loadtxt('inputs/wmap/wmap_ampl_bl_V1_7yr_v4.txt')[:,1][0:(lmax+1)]
+    beam  = 0.5 * (np.loadtxt('inputs/wmap/wmap_ampl_bl_V1_7yr_v4.txt')[:,1][0:(lmax+1)] + np.loadtxt('inputs/wmap/wmap_ampl_bl_V2_7yr_v4.txt')[:,1][0:(lmax+1)])
     beam *= hp.pixwin(nside)[0:(lmax+1)]
 
     clnn  = np.sum(ncov) * (4.*np.pi) / npix**2 / beam**2
