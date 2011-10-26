@@ -1,6 +1,8 @@
 import time
 import numpy as np
 
+# ===
+
 class dt():
     def __init__(self, _dt):
         self.dt = _dt
@@ -29,78 +31,65 @@ class stopwatch():
         self.lt = lt
         return ret
 
-class attr_dict(dict):
-    def __init__(self, ini=None):
-        if ini is not None:
-            for key in ini.keys():
-                self[key] = ini[key]
+# ===
 
-    def __getattr__(self, name):
-        return self[name]
+class jit:
+    # just-in-time instantiation wrapper class.
+    def __init__(self, ctype, *cargs, **ckwds):
+        self.__dict__['__jit_args'] = [ctype, cargs, ckwds]
+        self.__dict__['__jit_obj']  = None
 
-    def __setattr__(self, name, value):
-        self[name] = value
+    def instantiate(self):
+        [ctype, cargs, ckwds] = self.__dict__['__jit_args']
+        print 'jit: instantiating ctype =', ctype
+        self.__dict__['__jit_obj'] = ctype( *cargs, **ckwds )
+        del self.__dict__['__jit_args']
 
-# ---
+    def __getattr__(self, attr):
+        if self.__dict__['__jit_obj'] == None:
+            self.instantiate()
+        return getattr(self.__dict__['__jit_obj'], attr)
 
-def nlm2lmax(nlm):
-    lmax = int(np.floor(np.sqrt(2*nlm)-1))
-    assert( (lmax+2)*(lmax+1)/2 == nlm )
-    return lmax
+    def __setattr__(self, attr, val):
+        if self.__dict__['__jit_obj'] == None:
+            self.instantiate()
+        setattr(self.__dict__['__jit_obj'], attr, val)
 
-def lmax2nlm(lmax):
-    return (lmax+1)*(lmax+2)/2
+# ===
 
-def alm_splice(alm_lo, alm_hi, lsplit):
-    alm_lo_lmax = nlm2lmax( len(alm_lo) )
-    alm_hi_lmax = nlm2lmax( len(alm_hi) )
+class camb_clfile(object):
+    def __init__(self, tfname, lmax=None):
+        tarray = np.loadtxt(tfname)
+        assert(tarray[ 0, 0] == 2)
 
-    assert( alm_lo_lmax >= lsplit )
-    assert( alm_hi_lmax >= lsplit )
+        if lmax == None:
+            lmax = np.shape(tarray)[0]+1
+            assert(tarray[-1, 0] == lmax)
+        assert( (np.shape(tarray)[0]+1) >= lmax )
 
-    ret = np.copy(alm_hi)
-    for m in xrange(0, lsplit+1):
-        ret[(m*(2*alm_hi_lmax+1-m)/2 + m):(m*(2*alm_hi_lmax+1-m)/2+lsplit+1)] = alm_lo[(m*(2*alm_lo_lmax+1-m)/2 + m):(m*(2*alm_lo_lmax+1-m)/2+lsplit+1)]
-    return ret
+        ncol = np.shape(tarray)[1]
+        ell  = np.arange(2, lmax+1)
 
-def alm_copy(alm, lmax=None):
-    alm_lmax = nlm2lmax(len(alm))
-    assert(lmax <= alm_lmax)
-    
-    if (alm_lmax == lmax) or (lmax == None):
-        ret = np.copy(alm)
+        self.ls = np.concatenate( [ [0,0], ell ] )
+        if ncol == 5:
+            self.cltt = np.concatenate( [ [0,0], tarray[0:(lmax-1),1]*2.*np.pi/ell/(ell+1.)       ] )
+            self.clee = np.concatenate( [ [0,0], tarray[0:(lmax-1),2]*2.*np.pi/ell/(ell+1.)        ] )
+            self.clbb = np.concatenate( [ [0,0], tarray[0:(lmax-1),3]*2.*np.pi/ell/(ell+1.)        ] )
+            self.clte = np.concatenate( [ [0,0], tarray[0:(lmax-1),4]*2.*np.pi/ell/(ell+1.)        ] )
+
+        elif ncol == 6:
+            tcmb  = 2.726*1e6 #uK
+
+            self.cltt = np.concatenate( [ [0,0], tarray[0:(lmax-1),1]*2.*np.pi/ell/(ell+1.)       ] )
+            self.clee = np.concatenate( [ [0,0], tarray[0:(lmax-1),2]*2.*np.pi/ell/(ell+1.)       ] )
+            self.clte = np.concatenate( [ [0,0], tarray[0:(lmax-1),3]*2.*np.pi/ell/(ell+1.)       ] )
+            self.cldd = np.concatenate( [ [0,0], tarray[0:(lmax-1),4]*(ell+1.)/ell**3/tcmb**2     ] )
+            self.cltd = np.concatenate( [ [0,0], tarray[0:(lmax-1),5]*np.sqrt(ell+1.)/ell**3/tcmb ] )
+
+# ===
+
+def load_map(f):
+    if type(f) is str:
+        return hp.read_map(f)
     else:
-        ret = np.zeros(lmax2nlm(lmax), dtype=np.complex)
-        for m in xrange(0, lmax+1):
-            ret[((m*(2*lmax+1-m)/2) + m):(m*(2*lmax+1-m)/2 + lmax + 1)] = alm[(m*(2*alm_lmax+1-m)/2 + m):(m*(2*alm_lmax+1-m)/2 +lmax+1)]
-
-    return ret
-
-def alm2rlm(alm):
-    lmax = nlm2lmax( len(alm) )
-    rlm  = np.zeros( (lmax+1)**2 )
-
-    ls  = np.arange(0, lmax+1)
-    l2s = ls**2
-    rt2 = np.sqrt(2.)
-
-    rlm[l2s] = alm[ls].real
-    for m in xrange(1, lmax+1):
-        rlm[l2s[m:] + 2*m - 1] = alm[m*(2*lmax+1-m)/2 + ls[m:]].real * rt2
-        rlm[l2s[m:] + 2*m + 0] = alm[m*(2*lmax+1-m)/2 + ls[m:]].imag * rt2
-    return rlm
-
-def rlm2alm(rlm):
-    lmax = int( np.sqrt(len(rlm))-1 )
-    assert( (lmax+1)**2 == len(rlm) )
-
-    alm = np.zeros( lmax2nlm(lmax), dtype=np.complex )
-
-    ls  = np.arange(0, lmax+1, dtype=np.int64)
-    l2s = ls**2
-    ir2 = 1.0 / np.sqrt(2.)
-
-    alm[ls] = rlm[l2s]
-    for m in xrange(1, lmax+1):
-        alm[m*(2*lmax+1-m)/2 + ls[m:]] = (rlm[l2s[m:] + 2*m - 1] + 1.j * rlm[l2s[m:] + 2*m + 0]) * ir2
-    return alm
+        return f

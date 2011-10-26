@@ -8,21 +8,12 @@ import numpy  as np
 import healpy as hp
 
 import util
-import spectra
+import util_alm
 import template_removal
 
-def dot_op(alm1, alm2):
-    lmax1 = util.nlm2lmax(len(alm1))
-    lmax2 = util.nlm2lmax(len(alm2))
+# ===
 
-    assert(lmax1 == lmax2)
-    lmax = lmax1
-    
-    tcl = spectra.alm_cl_cross(alm1, alm2)
-
-    return np.sum( tcl * (2.*np.arange(0, lmax+1) + 1) )
-
-def calc_prep_map(map, s_cls, n_inv_filt):
+def calc_prep(map, s_cls, n_inv_filt):
     tmap = np.copy(map)
     n_inv_filt.apply_map(tmap)
 
@@ -35,17 +26,34 @@ def calc_prep_map(map, s_cls, n_inv_filt):
     hp.almxfl( alm, n_inv_filt.b_transf, inplace=True )
     return alm
 
-def apply_fini(alm, s_cls, n_inv_filt):
+def calc_fini(alm, s_cls, n_inv_filt):
     cltt_inv = np.zeros(len(s_cls.cltt))
     cltt_inv[np.where(s_cls.cltt != 0)] = 1.0/s_cls.cltt[np.where(s_cls.cltt != 0)]
     
-    hp.almxfl( alm, cltt_inv, inplace=True )
+    return hp.almxfl( alm, cltt_inv )
+
+# ===
+
+class dot_op():
+    def __init__(self, lmax=None):
+        self.lmax = lmax
+
+    def __call__(self, alm1, alm2):
+        lmax1 = util_alm.nlm2lmax(len(alm1))
+        lmax2 = util_alm.nlm2lmax(len(alm2))
+
+        if self.lmax != None:
+            lmax = self.lmax
+        else:
+            assert(lmax1 == lmax2)
+            lmax = lmax1
+
+        tcl = util_alm.alm_cl_cross(alm1, alm2)
+
+        return np.sum( tcl * (2.*np.arange(0, lmax+1) + 1) )
 
 class fwd_op():
     def __init__(self, s_cls, n_inv_filt):
-        # s_cls - a cl object
-        # n_inv - a healpix map array
-
         self.cltt_inv = np.zeros(len(s_cls.cltt))
         self.cltt_inv[np.where(s_cls.cltt != 0)] = 1.0/s_cls.cltt[np.where(s_cls.cltt != 0)]
 
@@ -63,6 +71,8 @@ class fwd_op():
         alm += hp.almxfl(talm, self.cltt_inv)
 
         return alm
+
+# ===
 
 class pre_op_diag():
     def __init__(self, s_cls, n_inv_filt):
@@ -99,7 +109,6 @@ class pre_op_dense():
         tmat = np.zeros( ( nrlm, nrlm ) )
         trlm = np.zeros( nrlm )
 
-        fwd_op.n_inv_filt.load_mem()
         ntmpl = 0
         for t in fwd_op.n_inv_filt.templates:
             ntmpl += t.nmodes
@@ -111,7 +120,7 @@ class pre_op_dense():
         for i in np.arange(0, nrlm):
             if np.mod(i, int( 0.1 * nrlm) ) == 0: print ("   filling M: %4.1f" % (100. * i / nrlm)), "%"
             trlm[i]   = 1.0
-            tmat[:,i] = util.alm2rlm( fwd_op( util.rlm2alm(trlm) ) )
+            tmat[:,i] = util_alm.alm2rlm( fwd_op( util_alm.rlm2alm(trlm) ) )
             trlm[i]   = 0.0
 
         print "   inverting M..."
@@ -132,42 +141,21 @@ class pre_op_dense():
         return self.calc(talm)
 
     def calc(self, talm):
-        return util.rlm2alm( np.dot( self.minv, util.alm2rlm(talm) ) )
+        return util_alm.rlm2alm( np.dot( self.minv, util_alm.alm2rlm(talm) ) )
 
+# ===
 
 class alm_filter_ninv():
     def __init__(self, n_inv, b_transf, marge_monopole=False, marge_dipole=False, marge_maps=[]):
-        self.par_n_inv      = n_inv
-        self.b_transf       = b_transf
-        self.marge_monopole = marge_monopole
-        self.marge_dipole   = marge_dipole
-        self.par_marge_maps = marge_maps
-        
-        self.memloaded = False
+        n_inv = util.load_map(n_inv)
 
-    def load_mem(self):
-        if self.memloaded == True:
-            return
-        
-        # load marge maps.
-        n_inv = self.par_n_inv
-        if isinstance( n_inv, basestring ):
-            n_inv = hp.read_map(self.n_inv)
-    
-        marge_maps = []
-        for i, v in enumerate(self.par_marge_maps):
-            if isinstance( v, basestring ):
-                marge_maps.append( hp.read_map(v) )
-            else:
-                marge_maps.append(v)
-        # --
-
-        for tmap in marge_maps:
+        templates = []
+        for tmap in [util.load_map(m) for m in marge_maps]:
             assert( len(n_inv) == len(tmap) )
-        
-        templates = [template_removal.template_map(tmap) for tmap in marge_maps]
-        if (self.marge_monopole): templates.append(template_removal.template_monopole())
-        if (self.marge_dipole)  : templates.append(template_removal.template_dipole())
+            templates.append( template_removal.template_map(tmap) )
+
+        if (marge_monopole): templates.append(template_removal.template_monopole())
+        if (marge_dipole)  : templates.append(template_removal.template_dipole())
 
         if (len(templates) != 0):
             nmodes = np.sum([t.nmodes for t in templates])
@@ -187,15 +175,15 @@ class alm_filter_ninv():
 
             self.Pt_Nn1_P_inv     = np.linalg.inv(Pt_Nn1_P)
 
-        self.n_inv      = n_inv
-        self.marge_maps = marge_maps
-        self.templates  = templates
+        self.n_inv          = n_inv
+        self.b_transf       = b_transf
 
-        self.memloaded = True
+        self.marge_monopole = marge_monopole
+        self.marge_dipole   = marge_dipole
 
-    def degrade(self, nside):
-        self.load_mem()
+        self.templates      = templates
         
+    def degrade(self, nside):
         if nside == hp.npix2nside(len(self.n_inv)):
             return self
         else:
@@ -206,8 +194,6 @@ class alm_filter_ninv():
             return alm_filter_ninv(hp.ud_grade(self.n_inv, nside, power=-2), self.b_transf, self.marge_monopole, self.marge_dipole, marge_maps)
 
     def apply_alm(self, alm):
-        self.load_mem()
-        
         # applies Y^T N^{-1} Y
         npix = len(self.n_inv)
         
@@ -217,14 +203,12 @@ class alm_filter_ninv():
 
         self.apply_map(tmap)
 
-        alm[:]  = hp.map2alm(tmap, lmax=util.nlm2lmax(len(alm)), iter=0, regression=False)
+        alm[:]  = hp.map2alm(tmap, lmax=util_alm.nlm2lmax(len(alm)), iter=0, regression=False)
         alm[:] *= (npix / (4.*np.pi))
         
         hp.almxfl(alm, self.b_transf, inplace=True)
         
     def apply_map(self, map):
-        self.load_mem()
-        
         # applies N^{-1}
         map *= self.n_inv
 

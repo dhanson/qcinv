@@ -2,7 +2,7 @@ import sys
 import numpy as np
 
 import util
-import spectra
+import util_alm
 
 ## monitors
 logger_basic = (lambda iter, eps, watch=None, **kwargs : sys.stdout.write( '[' + str(watch.elapsed()) + '] ' + str((iter, eps)) + '\n' ))
@@ -23,7 +23,7 @@ class monitor_basic():
             self.d0 = delta
 
         if (self.logger is not None): self.logger( iter, np.sqrt(delta/self.d0), watch=self.watch,
-                                                   soltn_cl=spectra.alm_cl(soltn), resid_cl=spectra.alm_cl(resid) )
+                                                   soltn_cl=util_alm.alm_cl(soltn), resid_cl=util_alm.alm_cl(resid) )
 
         if (iter >= self.iter_max) or (delta <= self.eps_min**2 * self.d0):
             return True

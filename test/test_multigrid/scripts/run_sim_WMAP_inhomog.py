@@ -24,7 +24,7 @@ if (__name__ == "__main__"):
     mask = hp.read_map("inputs/wmap/wmap_temperature_analysis_mask_r9_7yr_v4.fits")
 
     #theoretical power spectra.
-    cl = qcinv.spectra.camb_clfile('inputs/wmap/bestfit_lensedCls.dat', lmax=lmax)
+    cl = qcinv.util.camb_clfile('inputs/wmap/bestfit_lensedCls.dat', lmax=lmax)
     
     # noise level
     # http://lambda.gsfc.nasa.gov/product/map/dr4/skymap_info.cfm
@@ -63,9 +63,9 @@ if (__name__ == "__main__"):
     ls = np.arange(0, lmax+1)
 
     p = pl.loglog
-    p( ls, qcinv.spectra.alm_cl(talm) * ls * (ls+1.) / (2.*np.pi), color='m', linestyle='None', marker='+' )
-    p( ls, qcinv.spectra.alm_cl(nalm) * ls * (ls+1.) / (2.*np.pi), color='m', linestyle='None', marker='+' )
-    p( ls, qcinv.spectra.alm_cl(dalm) * ls * (ls+1.) / (2.*np.pi), color='orange', linestyle='None', marker='+' )
+    p( ls, qcinv.util_alm.alm_cl(talm) * ls * (ls+1.) / (2.*np.pi), color='m', linestyle='None', marker='+' )
+    p( ls, qcinv.util_alm.alm_cl(nalm) * ls * (ls+1.) / (2.*np.pi), color='m', linestyle='None', marker='+' )
+    p( ls, qcinv.util_alm.alm_cl(dalm) * ls * (ls+1.) / (2.*np.pi), color='orange', linestyle='None', marker='+' )
 
     p( ls, cl.cltt * ls * (ls+1.) / (2.*np.pi), color='r' )
     p( ls, clnn * ls * (ls+1.) / (2.*np.pi), color='blue', linestyle='--' )
