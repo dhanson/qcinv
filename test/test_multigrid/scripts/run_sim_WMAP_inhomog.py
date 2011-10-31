@@ -2,7 +2,6 @@
 
 import os
 import numpy  as np
-import pylab  as pl
 
 import healpy as hp
 import qcinv
@@ -45,37 +44,19 @@ if (__name__ == "__main__"):
     ninv *= mask
 
     # noise map
+    print "generating noise map"
     nmap  = np.random.standard_normal(npix) * np.sqrt(ncov)
-    nalm  = hp.almxfl( hp.map2alm(nmap, lmax=lmax), 1.0/beam)
 
     # cmb map
+    print "generating cmb map"
     tmap, talm = hp.synfast(cl.cltt * beam * beam, nside, lmax=lmax, alm=True)
     hp.almxfl(talm, 1.0/beam, inplace=True)
 
     dmap = (tmap + nmap) * mask
-    dalm = hp.map2alm(dmap, lmax=lmax, iter=0)
-    hp.almxfl(dalm, 1.0/beam, inplace=True)
-
-    #sanity check simulation.
-    pl.figure()
-    pl.ion()
-
-    ls = np.arange(0, lmax+1)
-
-    p = pl.loglog
-    p( ls, qcinv.util_alm.alm_cl(talm) * ls * (ls+1.) / (2.*np.pi), color='m', linestyle='None', marker='+' )
-    p( ls, qcinv.util_alm.alm_cl(nalm) * ls * (ls+1.) / (2.*np.pi), color='m', linestyle='None', marker='+' )
-    p( ls, qcinv.util_alm.alm_cl(dalm) * ls * (ls+1.) / (2.*np.pi), color='orange', linestyle='None', marker='+' )
-
-    p( ls, cl.cltt * ls * (ls+1.) / (2.*np.pi), color='r' )
-    p( ls, clnn * ls * (ls+1.) / (2.*np.pi), color='blue', linestyle='--' )
-
-    pl.show()
-
-    print 'ok to write outputs?'
-    raw_input()
 
     # write everything out
+
+    print "writing outputs"
 
     np.savetxt(out_prefix + "cltt.dat", cl.cltt)
     np.savetxt(out_prefix + "clnn.dat", clnn)

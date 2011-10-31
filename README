@@ -1,0 +1,72 @@
+QCINV
+=====
+
+A python-based C^{-1} filtering code,
+including the multigrid approach of 
+Smith, Dore, and Zahn (arxiv:0705.3980).
+
+Requirements:
+ * numpy
+ * healpy
+
+Is known to work with:
+ * python 2.6.1
+ * numpy 1.5.0
+ * healpy 0.10.2
+
+Older versions probably work as well.
+
+It's not explicitly parallel, but the
+healpy transforms which dominate the
+computational cost can use OpenMP.
+
+To install:
+
+python setup.py install
+
+(or add the qcinv directory to your $PYTHONPATH)
+
+To test:
+
+There are a few scripts in the test/ directory,
+to sanity check pieces of the library. Probably
+want to run test_cd_solve.py and test_cg_solve.py
+to make sure that the conjugate solvers work, as
+well as some of the numpy linear algebra.
+
+The construction of a fast multigrid chain is
+something of an art-- there are a few sample
+WMAP chains in the test/test_multigrid directory.
+
+To give them a try, first download the
+necessary WMAP data using the get script
+
+cd test/test_multigrid/inputs/wmap
+./get 
+
+Then generate a simple WMAP V-band simulation
+with a sky mask and inhomogeneous noise using
+
+cd test/test_multigrid
+scripts/run_sim_WMAP_inhomog.py
+
+In the test/test_multigrid/inputs directory
+there are several sample chains, which can be
+run using the run_chain.py script.
+
+They contain:
+ chain 1 - simple diagonal preconditioner (no multigrid).
+ chain 2 - three stage multigrid, with diagonal preconditioner at each stage.
+ chain 3 - four stage multigrid, with diagonal preconditioner at each stage.
+ chain 4 - three stage multigrid, with dense preconditioner up to l=64.
+ chain 5 - two stage multigrid, with dense preconditioner up to l=64.
+
+Chains 4 and 5 are the fastest, and converge to \epsilon=10^{-6} 
+in about 5 minutes on a single core of my 2.6GHz MacBook Pro. 
+To run, just call e.g. 
+
+scripts/run_chain.py inputs/par_sim_WMAP_inhomog_chain_04.py
+
+The dense preconditioners take a minute or two to construct,
+but are cached by the multigrid chain so this isn't much overhead
+if you're going to filter a bunch of simulations. 
