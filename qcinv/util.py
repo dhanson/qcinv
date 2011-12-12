@@ -1,5 +1,6 @@
 import time
-import numpy as np
+import numpy  as np
+import healpy as hp
 
 # ===
 
