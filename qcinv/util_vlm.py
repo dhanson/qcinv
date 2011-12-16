@@ -27,8 +27,8 @@ def vlm2alm_gc( vlm ):
         glm[l] = vlm[l*l+l].real
         clm[l] = vlm[l*l+l].imag
 
-        glm[ms * (2*lmax+1-ms)/2 + l] = -0.5  * ( vlm[l*l+l+ms] + (-1)**ms * np.conj( ret[l*l+l-ms] ) )
-        clm[ms * (2*lmax+1-ms)/2 + l] =  0.5j * ( vlm[l*l+l+ms] - (-1)**ms * np.conj( ret[l*l+l-ms] ) )
+        glm[ms * (2*lmax+1-ms)/2 + l] = -0.5  * ( vlm[l*l+l+ms] + (-1)**ms * np.conj( vlm[l*l+l-ms] ) )
+        clm[ms * (2*lmax+1-ms)/2 + l] =  0.5j * ( vlm[l*l+l+ms] - (-1)**ms * np.conj( vlm[l*l+l-ms] ) )
     return glm, clm
 
 def vlm_cl_cross(vlm1, vlm2, lmax=None):
