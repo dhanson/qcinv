@@ -120,11 +120,19 @@ def parse_pre_op_descr(pre_op_descr, **kwargs):
     elif re.match("diag_cl\Z", pre_op_descr):
         return kwargs['opfilt'].pre_op_diag( kwargs['s_cls'], kwargs['n_inv_filt'] )
     elif re.match("dense\Z", pre_op_descr):
+        #FIXME: remove this option in favor of dense() below.
         print 'creating dense preconditioner. (nside = %d, lmax = %d)' % (kwargs['nside'], kwargs['lmax'])
 
         fwd_op = kwargs['opfilt'].fwd_op( kwargs['s_cls'], kwargs['n_inv_filt'].degrade(kwargs['nside']) )
 
         return  kwargs['opfilt'].pre_op_dense( kwargs['lmax'], fwd_op )
+    elif re.match("dense\((.*)\)\Z", pre_op_descr):
+        (dense_cache_fname,) = re.match("dense\((.*)\)\Z", pre_op_descr).groups()
+        if dense_cache_fname == '': dense_cache_fname = None
+
+        print 'creating dense preconditioner. (nside = %d, lmax = %d, cache = %s)' % (kwargs['nside'], kwargs['lmax'], dense_cache_fname)
+        fwd_op = kwargs['opfilt'].fwd_op( kwargs['s_cls'], kwargs['n_inv_filt'].degrade(kwargs['nside']) )
+        return  kwargs['opfilt'].pre_op_dense( kwargs['lmax'], fwd_op, cache_fname=dense_cache_fname )
     elif re.match("stage\(.*\)\Z", pre_op_descr):
         (stage_id,) = re.match("stage\((.*)\)\Z", pre_op_descr).groups()
         print 'creating multigrid preconditioner: stage_id = ', stage_id

@@ -3,9 +3,10 @@
 # operations and filters for temperature only c^-1
 # S^{-1} (S^{-1} + Y^t N^{-1} Y)^{-1} Y^t N^{-1}
 
-import os
+import os, hashlib
 import numpy  as np
 import healpy as hp
+import pickle as pk
 
 import util
 import util_alm
@@ -99,21 +100,42 @@ class pre_op_diag():
         return hp.almxfl(talm, self.filt)
 
 class pre_op_dense():
-    def __init__(self, lmax, fwd_op):
+    def __init__(self, lmax, fwd_op, cache_fname=None):
         # construct a low-l, low-nside dense preconditioner by brute force.
         # order of operations is O(nside**2 lmax**3) ~ O(lmax**5), so doing
         # by brute force is still comparable to matrix inversion, with
         # benefit of being very simple to implement.
 
+        if (cache_fname != None) and (os.path.exists(cache_fname)):
+            nrlm = (lmax+1)**2
+
+            ntmpl = 0
+            for t in fwd_op.n_inv_filt.templates:
+                ntmpl += t.nmodes
+
+            [cache_nrlm, cache_ntmpl, cache_minv, cache_hashlist] = pk.load( open(cache_fname, 'r') )
+            self.minv = cache_minv
+
+            if ( (nrlm != cache_nrlm) or (ntmpl != cache_ntmpl) or (self.hashlist(nrlm, ntmpl, fwd_op) != cache_hashlist) ):
+                print "WARNING: PRE_OP_DENSE CACHE: hashcheck failed. recomputing."
+                os.remove(cache_fname)
+                self.compute_minv(lmax, fwd_op, cache_fname=cache_fname)
+        else:
+            self.compute_minv(lmax, fwd_op, cache_fname=cache_fname)
+
+    def compute_minv(self, lmax, fwd_op, cache_fname=None):
+        if cache_fname != None:
+            assert(not os.path.exists(cache_fname))
+
         nrlm = (lmax+1)**2
-        tmat = np.zeros( ( nrlm, nrlm ) )
         trlm = np.zeros( nrlm )
+        tmat = np.zeros( ( nrlm, nrlm ) )
 
         ntmpl = 0
         for t in fwd_op.n_inv_filt.templates:
             ntmpl += t.nmodes
 
-        print "initializing dense preconditioner:"
+        print "computing dense preconditioner:"
         print "     lmax  =", lmax
         print "     ntmpl =", ntmpl
 
@@ -136,6 +158,22 @@ class pre_op_dense():
             eigv_inv[0:ntmpl] = 1.0
 
         self.minv = np.dot( np.dot( eigw, np.diag(eigv_inv)), np.transpose(eigw) )
+
+        if cache_fname != None:
+            pk.dump( [nrlm, ntmpl, self.minv, self.hashlist(nrlm, ntmpl, fwd_op)], open(cache_fname, 'w') )
+
+    def hashlist(self, nrlm, ntmpl, fwd_op):
+        trlm = np.zeros( nrlm )
+
+        npts = ntmpl+1
+        assert( nrlm > npts )
+
+        hashlist = []
+        for i in np.array( np.linspace(0, nrlm, npts, endpoint=False), dtype=np.int ):
+            trlm[i]   = 1.0
+            hashlist.append( hashlib.sha1( util_alm.alm2rlm( fwd_op( util_alm.rlm2alm(trlm) ) ).view(np.uint8) ).hexdigest() )
+            trlm[i]   = 0.0
+        return hashlist
 
     def __call__(self, talm):
         return self.calc(talm)
