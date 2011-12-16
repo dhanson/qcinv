@@ -21,8 +21,9 @@ class multigrid_stage(object):
         self.pre_ops       = [] 
 
 class multigrid_chain():
-    def __init__(self, opfilt, chain_descr, s_cls, n_inv_filt, debug_log_prefix=None):
+    def __init__(self, opfilt, chain_descr, s_cls, n_inv_filt, debug_log_prefix=None, plogdepth=0):
         self.debug_log_prefix = debug_log_prefix
+        self.plogdepth      = plogdepth
 
         self.opfilt         = opfilt
         self.chain_descr    = chain_descr
@@ -65,7 +66,7 @@ class multigrid_chain():
         self.iter_tot += 1
         elapsed = self.watch.elapsed()
 
-        if stage.depth != 0:
+        if stage.depth > self.plogdepth:
             return
 
         log_str = ('   ')*stage.depth + '(%4d, %04d) [%s] (%d, %f)' % (stage.nside, stage.lmax, str(elapsed), iter, eps) + '\n'
