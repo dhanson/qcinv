@@ -28,8 +28,9 @@ def calc_prep(map, s_cls, n_inv_filt):
     return alm
 
 def calc_fini(alm, s_cls, n_inv_filt):
-    cltt_inv = np.zeros(len(s_cls.cltt))
-    cltt_inv[np.where(s_cls.cltt != 0)] = 1.0/s_cls.cltt[np.where(s_cls.cltt != 0)]
+    cltt = s_cls.cltt[:]
+    cltt_inv = np.zeros(len(cltt))
+    cltt_inv[np.where(cltt != 0)] = 1.0/cltt[np.where(cltt != 0)]
     
     return hp.almxfl( alm, cltt_inv )
 
@@ -55,8 +56,9 @@ class dot_op():
 
 class fwd_op():
     def __init__(self, s_cls, n_inv_filt):
-        self.cltt_inv = np.zeros(len(s_cls.cltt))
-        self.cltt_inv[np.where(s_cls.cltt != 0)] = 1.0/s_cls.cltt[np.where(s_cls.cltt != 0)]
+        cltt = s_cls.cltt[:]
+        self.cltt_inv = np.zeros(len(cltt))
+        self.cltt_inv[np.where(cltt != 0)] = 1.0/cltt[np.where(cltt != 0)]
 
         self.n_inv_filt = n_inv_filt
 
@@ -77,16 +79,18 @@ class fwd_op():
 
 class pre_op_diag():
     def __init__(self, s_cls, n_inv_filt):
-        assert( len(s_cls.cltt) >= len(n_inv_filt.b_transf) )
+        cltt = s_cls.cltt[:]
+        
+        assert( len(cltt) >= len(n_inv_filt.b_transf) )
         
         n_inv_cl = np.sum( n_inv_filt.n_inv ) / (4.0*np.pi)
 
         lmax = len(n_inv_filt.b_transf)-1
-        assert( lmax <= (len(s_cls.cltt)-1) )
+        assert( lmax <= (len(cltt)-1) )
         
         filt = np.zeros(lmax+1)
 
-        filt[ np.where(s_cls.cltt[0:lmax+1] != 0) ] += 1.0/s_cls.cltt[np.where(s_cls.cltt[0:lmax+1] != 0)]
+        filt[ np.where(cltt[0:lmax+1] != 0) ] += 1.0/cltt[np.where(s_cls.cltt[0:lmax+1] != 0)]
         filt[ np.where(n_inv_filt.b_transf[0:lmax+1] != 0) ] += n_inv_cl * n_inv_filt.b_transf[np.where(n_inv_filt.b_transf[0:lmax+1] != 0)]**2
 
         filt[np.where(filt != 0)] = 1.0/filt[np.where(filt != 0)]
@@ -185,7 +189,7 @@ class pre_op_dense():
 
 class alm_filter_ninv():
     def __init__(self, n_inv, b_transf, marge_monopole=False, marge_dipole=False, marge_maps=[]):
-        n_inv = util.load_map(n_inv)
+        n_inv = util.load_map(n_inv[:])
 
         templates = []
         for tmap in [util.load_map(m) for m in marge_maps]:
@@ -214,7 +218,7 @@ class alm_filter_ninv():
             self.Pt_Nn1_P_inv     = np.linalg.inv(Pt_Nn1_P)
 
         self.n_inv          = n_inv
-        self.b_transf       = b_transf
+        self.b_transf       = b_transf[:]
 
         self.marge_monopole = marge_monopole
         self.marge_dipole   = marge_dipole
