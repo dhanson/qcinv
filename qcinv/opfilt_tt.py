@@ -62,6 +62,10 @@ class fwd_op():
 
         self.n_inv_filt = n_inv_filt
 
+    def hashdict(self):
+        return { 'cltt_inv'   : hashlib.sha1( self.cltt_inv.view(np.uint8) ).hexdigest(),
+                 'n_inv_filt' : self.n_inv_filt.hashdict() }
+
     def __call__(self, talm):
         return self.calc(talm)
 
@@ -111,16 +115,10 @@ class pre_op_dense():
         # benefit of being very simple to implement.
 
         if (cache_fname != None) and (os.path.exists(cache_fname)):
-            nrlm = (lmax+1)**2
-
-            ntmpl = 0
-            for t in fwd_op.n_inv_filt.templates:
-                ntmpl += t.nmodes
-
-            [cache_nrlm, cache_ntmpl, cache_minv, cache_hashlist] = pk.load( open(cache_fname, 'r') )
+            [cache_lmax, cache_hashdict, cache_minv] = pk.load( open(cache_fname, 'r') )
             self.minv = cache_minv
 
-            if ( (nrlm != cache_nrlm) or (ntmpl != cache_ntmpl) or (self.hashlist(nrlm, ntmpl, fwd_op) != cache_hashlist) ):
+            if ( (lmax != cache_lmax) or (self.hashdict(lmax, fwd_op) != cache_hashdict) ):
                 print "WARNING: PRE_OP_DENSE CACHE: hashcheck failed. recomputing."
                 os.remove(cache_fname)
                 self.compute_minv(lmax, fwd_op, cache_fname=cache_fname)
@@ -164,20 +162,11 @@ class pre_op_dense():
         self.minv = np.dot( np.dot( eigw, np.diag(eigv_inv)), np.transpose(eigw) )
 
         if cache_fname != None:
-            pk.dump( [nrlm, ntmpl, self.minv, self.hashlist(nrlm, ntmpl, fwd_op)], open(cache_fname, 'w') )
+            pk.dump( [lmax, self.hashdict(lmax, fwd_op), self.minv], open(cache_fname, 'w') )
 
-    def hashlist(self, nrlm, ntmpl, fwd_op):
-        trlm = np.zeros( nrlm )
-
-        npts = ntmpl+1
-        assert( nrlm > npts )
-
-        hashlist = []
-        for i in np.array( np.linspace(0, nrlm, npts, endpoint=False), dtype=np.int ):
-            trlm[i]   = 1.0
-            hashlist.append( hashlib.sha1( util_alm.alm2rlm( fwd_op( util_alm.rlm2alm(trlm) ) ).view(np.uint8) ).hexdigest() )
-            trlm[i]   = 0.0
-        return hashlist
+    def hashdict(self, lmax, fwd_op):
+        return { 'lmax'   : lmax,
+                 'fwd_op' : fwd_op.hashdict() }
 
     def __call__(self, talm):
         return self.calc(talm)
@@ -191,10 +180,11 @@ class alm_filter_ninv():
     def __init__(self, n_inv, b_transf, marge_monopole=False, marge_dipole=False, marge_maps=[]):
         n_inv = util.load_map(n_inv[:])
 
-        templates = []
+        templates = []; templates_hash = []
         for tmap in [util.load_map(m) for m in marge_maps]:
             assert( len(n_inv) == len(tmap) )
             templates.append( template_removal.template_map(tmap) )
+            templates_hash.append( hashlib.sha1( tmap.view(np.uint8) ).hexdigest() )
 
         if (marge_monopole): templates.append(template_removal.template_monopole())
         if (marge_dipole)  : templates.append(template_removal.template_dipole())
@@ -224,6 +214,14 @@ class alm_filter_ninv():
         self.marge_dipole   = marge_dipole
 
         self.templates      = templates
+        self.templates_hash = templates_hash
+
+    def hashdict(self):
+        return { 'n_inv'          : hashlib.sha1( self.n_inv.view(np.uint8) ).hexdigest(),
+                 'b_transf'       : hashlib.sha1( self.b_transf.view(np.uint8) ).hexdigest(),
+                 'marge_monopole' : self.marge_monopole,
+                 'marge_dipole'   : self.marge_dipole,
+                 'templates_hash' : self.templates_hash }
         
     def degrade(self, nside):
         if nside == hp.npix2nside(len(self.n_inv)):
