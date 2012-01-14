@@ -85,7 +85,7 @@ class camb_clfile(object):
             self.clee = np.concatenate( [ [0,0], tarray[0:(lmax-1),2]*2.*np.pi/ell/(ell+1.)       ] )
             self.clte = np.concatenate( [ [0,0], tarray[0:(lmax-1),3]*2.*np.pi/ell/(ell+1.)       ] )
             self.cldd = np.concatenate( [ [0,0], tarray[0:(lmax-1),4]*(ell+1.)/ell**3/tcmb**2     ] )
-            self.cltd = np.concatenate( [ [0,0], tarray[0:(lmax-1),5]*np.sqrt(ell+1.)/ell**3/tcmb ] )
+            self.cltd = np.concatenate( [ [0,0], tarray[0:(lmax-1),5]*np.sqrt(ell*(ell+1.))/ell**3/tcmb ] )
 
 # ===
 
