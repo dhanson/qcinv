@@ -153,15 +153,33 @@ class pre_op_dense():
 # ===
 
 class alm_filter_ninv_filts(object):
-    def __init__(self, n_inv_filts):
-        self.n_inv_filts = n_inv_filts
+    def __init__(self, n_inv_filts, degrade_single=False):
+        self.n_inv_filts    = n_inv_filts
+        self.degrade_single = degrade_single
 
     def hashdict(self):
-        return { 'n_inv_filts' : [ n_inv_filt.hashdict() for n_inv_filt in self.n_inv_filts ] }
+        return { 'degrade_single' : self.degrade_single,
+                 'n_inv_filts' : [ n_inv_filt.hashdict() for n_inv_filt in self.n_inv_filts ] }
 
     def degrade(self, nside):
         degraded_filts = [ n_inv_filt.degrade(nside) for n_inv_filt in self.n_inv_filts ]
-        return alm_filter_ninv_filts( degraded_filts )
+
+        if self.degrade_single == True:
+            n_inv    = np.zeros( 12*nside**2 )
+            b_transf = np.zeros( len(degraded_filts[0].b_transf - 1) )
+
+            for filt in degraded_filts:
+                n_inv    += filt.n_inv
+                b_transf += filt.b_transf
+
+                assert(filt.marge_dipole   == True)
+                assert(filt.marge_monopole == True)
+
+            b_transf /= len(degraded_filts)
+
+            return alm_filter_ninv_filts( [opfilt_tt.alm_filter_ninv( n_inv, b_transf, marge_monopole=True, marge_dipole=True )] )
+        else:
+            return alm_filter_ninv_filts( degraded_filts )
 
     def __iter__(self):
         for n_inv_filt in self.n_inv_filts:
