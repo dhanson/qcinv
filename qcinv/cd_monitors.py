@@ -23,7 +23,7 @@ class monitor_basic():
             self.d0 = delta
 
         if (self.logger is not None): self.logger( iter, np.sqrt(delta/self.d0), watch=self.watch,
-                                                   soltn_cl=util_alm.alm_cl(soltn), resid_cl=util_alm.alm_cl(resid) )
+                                                   soltn=soltn, resid=resid )
 
         if (iter >= self.iter_max) or (delta <= self.eps_min**2 * self.d0):
             return True

@@ -27,12 +27,12 @@ def calc_prep(map, s_cls, n_inv_filt):
     hp.almxfl( alm, n_inv_filt.b_transf, inplace=True )
     return alm
 
-def calc_fini(alm, s_cls, n_inv_filt):
+def apply_fini(alm, s_cls, n_inv_filt):
     cltt = s_cls.cltt[:]
     cltt_inv = np.zeros(len(cltt))
     cltt_inv[np.where(cltt != 0)] = 1.0/cltt[np.where(cltt != 0)]
     
-    return hp.almxfl( alm, cltt_inv )
+    hp.almxfl( alm, cltt_inv, inplace=True )
 
 # ===
 

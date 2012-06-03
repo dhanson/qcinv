@@ -16,7 +16,7 @@ import util_alm
 import template_removal
 
 import opfilt_tt
-from opfilt_tt import calc_fini, dot_op, pre_op_dense
+from opfilt_tt import apply_fini, dot_op, pre_op_dense
 
 def calc_prep(maps, s_cls, n_inv_filts):
     alm = opfilt_tt.calc_prep( maps[0], s_cls, n_inv_filts[0] )
@@ -159,7 +159,7 @@ class alm_filter_ninv_filts(object):
 
     def hashdict(self):
         return { 'degrade_single' : self.degrade_single,
-                 'n_inv_filts' : [ n_inv_filt.hashdict() for n_inv_filt in self.n_inv_filts ] }
+                 'n_inv_filts'    : [ n_inv_filt.hashdict() for n_inv_filt in self.n_inv_filts ] }
 
     def degrade(self, nside):
         degraded_filts = [ n_inv_filt.degrade(nside) for n_inv_filt in self.n_inv_filts ]

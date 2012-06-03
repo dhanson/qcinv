@@ -71,7 +71,8 @@ class camb_clfile(object):
         ncol = np.shape(tarray)[1]
         ell  = np.arange(2, lmax+1)
 
-        self.ls = np.concatenate( [ [0,0], ell ] )
+        self.lmax = lmax
+        self.ls   = np.concatenate( [ [0,1], ell ] )
         if ncol == 5:
             self.cltt = np.concatenate( [ [0,0], tarray[0:(lmax-1),1]*2.*np.pi/ell/(ell+1.)       ] )
             self.clee = np.concatenate( [ [0,0], tarray[0:(lmax-1),2]*2.*np.pi/ell/(ell+1.)        ] )

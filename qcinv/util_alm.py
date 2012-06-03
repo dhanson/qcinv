@@ -44,6 +44,9 @@ def alm_splice(alm_lo, alm_hi, lsplit):
     """ returns an alm w/ lmax = lmax(alm_hi) which is
            alm_lo for (l <= lsplit)
            alm_hi for (l  > lsplit) """
+    if hasattr( alm_lo, 'alm_splice' ):
+        return alm_lo.alm_splice(alm_hi, lsplit)
+
     alm_lo_lmax = nlm2lmax( len(alm_lo) )
     alm_hi_lmax = nlm2lmax( len(alm_hi) )
 
@@ -58,7 +61,10 @@ def alm_splice(alm_lo, alm_hi, lsplit):
 def alm_copy(alm, lmax=None):
     """ copies the alm array, with the option
     to reduce its lmax """
-    
+
+    if hasattr( alm, 'alm_copy' ):
+        return alm.alm_copy(lmax=lmax)
+
     alm_lmax = nlm2lmax(len(alm))
     assert(lmax <= alm_lmax)
     

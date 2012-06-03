@@ -60,7 +60,7 @@ class multigrid_chain():
                            fwd_op, self.bstage.pre_ops, self.opfilt.dot_op(), monitor,
                            tr=self.bstage.tr, cache=self.bstage.cache )
 
-        soltn[:] = self.opfilt.calc_fini( soltn, self.s_cls, self.n_inv_filt )
+        self.opfilt.apply_fini( soltn, self.s_cls, self.n_inv_filt )
 
     def log(self, stage, iter, eps, **kwargs):
         self.iter_tot += 1
@@ -201,7 +201,7 @@ class pre_op_multigrid():
     def calc(self, talm):
         monitor = cd_monitors.monitor_basic(self.opfilt.dot_op(), iter_max=self.iter_max, eps_min=self.eps_min, logger=self.logger)
 
-        soltn = np.zeros(util_alm.lmax2nlm(self.lmax), dtype=np.complex)
+        soltn = talm * 0.0
 
         cd_solve.cd_solve( soltn, util_alm.alm_copy(talm, lmax=self.lmax),
                            self.fwd_op, self.pre_ops, self.opfilt.dot_op(),
