@@ -126,7 +126,7 @@ class fwd_op():
 class pre_op_diag():
     def __init__(self, s_cls, n_inv_filt):
         s_inv_filt = alm_filter_sinv(s_cls)
-        assert( s_inv_filt.lmax >= len(n_inv_filt.b_transf) )
+        assert( (s_inv_filt.lmax+1) >= len(n_inv_filt.b_transf) )
 
         ninv_ftl, ninv_fel, ninv_fbl = n_inv_filt.get_ftebl()
 
