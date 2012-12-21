@@ -88,6 +88,8 @@ class camb_clfile(object):
             self.cldd = np.concatenate( [ [0,0], tarray[0:(lmax-1),4]*(ell+1.)/ell**3/tcmb**2     ] )
             self.cltd = np.concatenate( [ [0,0], tarray[0:(lmax-1),5]*np.sqrt(ell*(ell+1.))/ell**3/tcmb ] )
 
+            self.clpp = np.concatenate( [ [0,0], tarray[0:(lmax-1),4]/ell**4/tcmb**2     ] )
+
 # ===
 
 def load_map(f):

@@ -248,12 +248,13 @@ class alm_filter_ninv():
         
         hp.almxfl(alm, self.b_transf, inplace=True)
         
-    def apply_map(self, map):
+    def apply_map(self, tmap):
         # applies N^{-1}
-        map *= self.n_inv
+
+        tmap *= self.n_inv
 
         if len(self.templates) != 0:
-            coeffs = np.concatenate(([t.dot(map) for t in self.templates]))
+            coeffs = np.concatenate(([t.dot(tmap) for t in self.templates]))
             coeffs = np.dot( self.Pt_Nn1_P_inv, coeffs )
 
             pmodes = np.zeros( len(self.n_inv) )
@@ -262,4 +263,4 @@ class alm_filter_ninv():
                 t.accum(pmodes, coeffs[im:(im+t.nmodes)])
                 im += t.nmodes
             pmodes *= self.n_inv
-            map -= pmodes
+            tmap -= pmodes
