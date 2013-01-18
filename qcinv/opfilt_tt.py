@@ -178,7 +178,14 @@ class pre_op_dense():
 
 class alm_filter_ninv():
     def __init__(self, n_inv, b_transf, marge_monopole=False, marge_dipole=False, marge_maps=[]):
-        n_inv = util.load_map(n_inv[:])
+        if isinstance(n_inv, list):
+            n_inv_prod = util.load_map(n_inv[0][:])
+            if (len(n_inv) > 1):
+                for n in n_inv[1:]:
+                    n_inv_prod = n_inv_prod * util.load_map(n[:])
+            n_inv = n_inv_prod
+        else:
+            n_inv = util.load_map(n_inv[:])
 
         templates = []; templates_hash = []
         for tmap in [util.load_map(m) for m in marge_maps]:
