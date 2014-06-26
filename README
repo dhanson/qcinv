@@ -67,6 +67,7 @@ Chains 4 and 5 are the fastest, and converge to \epsilon=10^{-6}
 in about 5 minutes on a single core of my 2.6GHz MacBook Pro. 
 To run, just call e.g. 
 
+scripts/run_sim_WMAP_inhomog.py inputs/par_sim_WMAP_inhomog_chain_04.py
 scripts/run_chain.py inputs/par_sim_WMAP_inhomog_chain_04.py
 
 The dense preconditioners take a minute or two to construct,
