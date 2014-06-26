@@ -79,11 +79,11 @@ class multigrid_chain():
 
             if (stage.depth == 0):
                 f_handle = file(self.debug_log_prefix + 'stage_soltn_' + str(stage.depth) + '.dat', 'a')
-                np.savetxt(f_handle, [[v for v in kwargs['soltn_cl']]])
+                np.savetxt(f_handle, [[v for v in kwargs['soltn']]])
                 f_handle.close()
 
                 f_handle = file(self.debug_log_prefix + 'stage_resid_' + str(stage.depth) + '.dat', 'a')
-                np.savetxt(f_handle, [[v for v in kwargs['resid_cl']]])
+                np.savetxt(f_handle, [[v for v in kwargs['resid']]])
                 f_handle.close()
 
             log_str = '%05d %05d %10.6e %05d %s\n' % (self.iter_tot, int(elapsed), eps, iter, str(elapsed))
