@@ -184,6 +184,8 @@ class alm_filter_ninv():
                 for n in n_inv[1:]:
                     n_inv_prod = n_inv_prod * util.load_map(n[:])
             n_inv = n_inv_prod
+            print "std = ",  np.std( n_inv[ np.where(n_inv[:] != 0.0) ] ) / np.average( n_inv[ np.where(n_inv[:] != 0.0) ] )
+            assert( np.std( n_inv[ np.where(n_inv[:] != 0.0) ] ) / np.average( n_inv[ np.where(n_inv[:] != 0.0) ] ) < 1.e-7 )
         else:
             n_inv = util.load_map(n_inv[:])
 
@@ -234,10 +236,11 @@ class alm_filter_ninv():
         if nside == hp.npix2nside(len(self.n_inv)):
             return self
         else:
+            print "DEGRADING WITH NO MARGE MAPS"
             marge_maps = []
-            n_marge_maps = len(self.templates) - (self.marge_monopole + self.marge_dipole)
-            if ( n_marge_maps > 0 ):
-                marge_maps = [hp.ud_grade(ti.map, nside) for ti in self.templates[0:n_marge_maps]]
+            #n_marge_maps = len(self.templates) - (self.marge_monopole + self.marge_dipole)
+            #if ( n_marge_maps > 0 ):
+            #    marge_maps = [hp.ud_grade(ti.map, nside) for ti in self.templates[0:n_marge_maps]]
             return alm_filter_ninv(hp.ud_grade(self.n_inv, nside, power=-2), self.b_transf, self.marge_monopole, self.marge_dipole, marge_maps)
 
     def apply_alm(self, alm):
@@ -260,7 +263,7 @@ class alm_filter_ninv():
 
         tmap *= self.n_inv
 
-        if len(self.templates) != 0:
+        if (len(self.templates) != 0):
             coeffs = np.concatenate(([t.dot(tmap) for t in self.templates]))
             coeffs = np.dot( self.Pt_Nn1_P_inv, coeffs )
 

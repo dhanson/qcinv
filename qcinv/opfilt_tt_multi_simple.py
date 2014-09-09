@@ -20,8 +20,8 @@ from opfilt_tt import apply_fini, dot_op, pre_op_dense
 
 def calc_prep(maps, s_cls, n_inv_filts):
     alm = opfilt_tt.calc_prep( maps[0], s_cls, n_inv_filts[0] )
-    for map, n_inv_filt in zip(maps[1:], n_inv_filts[1:]):
-        alm += opfilt_tt.calc_prep( map, s_cls, n_inv_filt )
+    for m, n_inv_filt in zip(maps[1:], n_inv_filts[1:]):
+        alm += opfilt_tt.calc_prep( m, s_cls, n_inv_filt )
     return alm
 
 class fwd_op():
