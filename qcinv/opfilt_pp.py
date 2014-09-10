@@ -268,6 +268,7 @@ class alm_filter_ninv():
                 self.n_inv.append(util.load_map(n_inv[i]))
         n_inv = self.n_inv
 
+        assert( len(n_inv) == 1 )
         npix  = len(n_inv[0])
         nside = hp.npix2nside(npix)
         for n in n_inv[1:]:

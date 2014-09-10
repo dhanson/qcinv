@@ -16,7 +16,7 @@ import util_alm
 import template_removal
 
 import opfilt_tt
-from opfilt_tt import apply_fini, dot_op, pre_op_dense
+from opfilt_tt import apply_fini, dot_op
 
 def calc_prep(maps, s_cls, n_inv_filts):
     alm = opfilt_tt.calc_prep( maps[0], s_cls, n_inv_filts[0] )
