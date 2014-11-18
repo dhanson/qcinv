@@ -230,16 +230,16 @@ class alm_filter_sinv():
     def __init__(self, s_cls):
         lmax = s_cls.lmax
         zs   = np.zeros(lmax+1)
-        
-        slmat = np.zeros( (lmax+1, 2, 2) ) # matrix of EB correlations at each l.
-        slmat[:,0,0] = getattr(s_cls, 'clee', zs.copy())
-        slmat[:,0,1] = getattr(s_cls, 'cleb', zs.copy()); slmat[:,1,0] = slmat[:,0,1]
-        slmat[:,1,1] = getattr(s_cls, 'clbb', zs.copy())
 
+        slmat = np.zeros( (lmax+1, 2, 2) ) # matrix of EB correlations at each l.
+        slmat[:,0,0] = getattr(s_cls, 'clee', zs.copy())[:]
+        slmat[:,0,1] = getattr(s_cls, 'cleb', zs.copy())[:]; slmat[:,1,0] = slmat[:,0,1]
+        slmat[:,1,1] = getattr(s_cls, 'clbb', zs.copy())[:]
+        
         slinv = np.zeros( (lmax+1, 2, 2) )
         for l in xrange(0, lmax+1):
             slinv[l,:,:] = np.linalg.pinv( slmat[l] )
-
+            
         self.lmax  = lmax
         self.slinv = slinv
 
